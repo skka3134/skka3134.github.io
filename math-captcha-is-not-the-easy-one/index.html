@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The math captcha is not the easy one</title>
+<meta name="description" content="Arithmetic challenges look trivial until you run one at volume. Reading the challenge is the real problem, and a wrong read looks exactly like a wrong answer.">
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0f1115;color:#d7dbe0;
+     font:16px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:720px;margin:0 auto;padding:48px 22px 90px}
+a{color:#7dd3fc;text-decoration:none}
+a:hover{text-decoration:underline}
+header.site{border-bottom:1px solid #21262d;padding-bottom:22px;margin-bottom:38px}
+header.site h1{margin:0 0 8px;font-size:24px;letter-spacing:-.02em}
+header.site p{margin:0;color:#8b949e;font-size:14px}
+article h1{font-size:30px;line-height:1.25;letter-spacing:-.02em;margin:0 0 8px}
+article time{color:#8b949e;font-size:13px}
+article h2{font-size:21px;margin:34px 0 10px;letter-spacing:-.01em}
+article h3{font-size:17px;margin:26px 0 8px}
+article p{margin:14px 0}
+article ul,article ol{margin:14px 0;padding-left:22px}
+article li{margin:6px 0}
+article code{background:#1c2128;padding:2px 6px;border-radius:4px;font-size:14px;
+             font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+article pre{background:#161b22;border:1px solid #21262d;border-radius:8px;
+            padding:14px 16px;overflow-x:auto}
+article pre code{background:none;padding:0;font-size:13px;line-height:1.6}
+article blockquote{border-left:3px solid #30363d;margin:16px 0;padding:2px 0 2px 16px;color:#9ba3ad}
+ul.posts{list-style:none;padding:0;margin:0}
+ul.posts li{border-bottom:1px solid #21262d;padding:20px 0}
+ul.posts li:last-child{border-bottom:0}
+ul.posts h2{margin:0 0 6px;font-size:19px;font-weight:600}
+ul.posts h2 a{color:#e6edf3}
+ul.posts h2 a:hover{color:#7dd3fc}
+ul.posts time{color:#8b949e;font-size:13px}
+ul.posts p{margin:8px 0 0;color:#9ba3ad;font-size:15px}
+footer.site{margin-top:60px;padding-top:22px;border-top:1px solid #21262d;
+            color:#6e7681;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+  <h1><a href="/" style="color:inherit">Tom Hargreaves</a></h1>
+  <p>Notes on automation, scraping, and the parts of it that break in production.</p>
+</header>
+<article><h1>The math captcha is not the easy one</h1><time>2026-10-04</time>
+<p>Arithmetic challenges get written off as the easy case. No image grid, no drag target, no audio fallback. It is a sum. You compute it. I thought the same thing until I ran one at volume and found that almost none of my failures had anything to do with arithmetic.</p>
+<h2>Reading the challenge is the whole job</h2>
+<p>The sum is trivial. Getting the sum into your program as text is not.</p>
+<p>In a sample of a few thousand, the challenge text was rendered in several genuinely different ways: plain text in the DOM, text inside a canvas, text inside an image with a gradient background, and text that was in the DOM but visually distorted by a transform. Those are four different extraction problems wearing the same name.</p>
+<p>If you wrote your reader against the first kind, it can look like it works. It works until it meets the second kind, and then it fails in a way that reads as "wrong answer" rather than "no answer at all".</p>
+<h2>A wrong read and a wrong calculation look identical</h2>
+<p>This is the part that cost me the most time. If you compute 47 and the real sum was 41, the site rejects you. You have no idea whether you misread the digits or miscomputed. Both produce the same rejection.</p>
+<p>What fixed it was logging the raw extracted text before parsing, next to the parsed operands and the answer I sent. Once that was in place, the mistake was obvious in about ten minutes: my extractor was picking up a decorative element as a digit, so <code>6 + 9</code> was being read as <code>6 + 9 =</code> in some layouts and failing the parse differently in others.</p>
+<p>I had been staring at arithmetic for two days when the bug was in text extraction.</p>
+<h2>Formats worth handling explicitly</h2>
+<p>Some things I ended up treating as normal rather than exceptional:</p>
+<ul><li><strong>Word forms.</strong> "seven plus two" and "7 + 2" are the same challenge.</li><li><strong>Word problems with filler.</strong> "If you have four apples and get three more..." The numbers matter; the sentence does not.</li><li><strong>Zero and letter O.</strong> On a low-contrast render these are genuinely ambiguous, and it is worth having a rule rather than letting the parser guess.</li><li><strong>Negative and multi-digit results.</strong> A challenge designed for humans rarely has them, but a badly configured one can, and your parser quietly truncates.</li></ul>
+<h2>Separate the layers, then each one is easy</h2>
+<p>The version that finally held up treats this as three separate things: extract text, normalise it into a canonical form, then parse and compute. Each layer logs its own output. When something fails now, I can say which layer failed, which is the only reason I could stop guessing.</p>
+<p>It also means the compute step is a pure function I can test exhaustively, without a browser involved.</p>
+<h2>Where a service fits</h2>
+<p>Extraction on distorted renders is the part I stopped building myself. A <a href="https://fuckcaptcha.top/">mathematical captcha</a> endpoint hands back the text for the challenge, and then normalisation and parsing stay in my code where they are testable. The reason I split it that way is not accuracy on the easy renders, it is that the hard renders are a separate problem with its own failure modes, and I would rather not debug both at once.</p></article>
+<footer class="site">
+  <p>Tom Hargreaves</p>
+</footer>
+</div>
+</body>
+</html>
