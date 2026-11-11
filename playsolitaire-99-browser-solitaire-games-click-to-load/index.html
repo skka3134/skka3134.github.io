@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Field notes from playsolitaire: what 99 browser solitaire games actually load</title>
+<meta name="description" content="A field log from a 99-game solitaire catalogue: click-to-load embeds, per-family page structure, the rules pages that are actually correct, and where 99 different builds stop behaving alike.">
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0f1115;color:#d7dbe0;
+     font:16px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:720px;margin:0 auto;padding:48px 22px 90px}
+a{color:#7dd3fc;text-decoration:none}
+a:hover{text-decoration:underline}
+header.site{border-bottom:1px solid #21262d;padding-bottom:22px;margin-bottom:38px}
+header.site h1{margin:0 0 8px;font-size:24px;letter-spacing:-.02em}
+header.site p{margin:0;color:#8b949e;font-size:14px}
+article h1{font-size:30px;line-height:1.25;letter-spacing:-.02em;margin:0 0 8px}
+article time{color:#8b949e;font-size:13px}
+article h2{font-size:21px;margin:34px 0 10px;letter-spacing:-.01em}
+article h3{font-size:17px;margin:26px 0 8px}
+article p{margin:14px 0}
+article ul,article ol{margin:14px 0;padding-left:22px}
+article li{margin:6px 0}
+article code{background:#1c2128;padding:2px 6px;border-radius:4px;font-size:14px;
+             font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+article pre{background:#161b22;border:1px solid #21262d;border-radius:8px;
+            padding:14px 16px;overflow-x:auto}
+article pre code{background:none;padding:0;font-size:13px;line-height:1.6}
+article blockquote{border-left:3px solid #30363d;margin:16px 0;padding:2px 0 2px 16px;color:#9ba3ad}
+ul.posts{list-style:none;padding:0;margin:0}
+ul.posts li{border-bottom:1px solid #21262d;padding:20px 0}
+ul.posts li:last-child{border-bottom:0}
+ul.posts h2{margin:0 0 6px;font-size:19px;font-weight:600}
+ul.posts h2 a{color:#e6edf3}
+ul.posts h2 a:hover{color:#7dd3fc}
+ul.posts time{color:#8b949e;font-size:13px}
+ul.posts p{margin:8px 0 0;color:#9ba3ad;font-size:15px}
+footer.site{margin-top:60px;padding-top:22px;border-top:1px solid #21262d;
+            color:#6e7681;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+  <h1><a href="/" style="color:inherit">Tom Hargreaves</a></h1>
+  <p>Notes on automation, scraping, and the parts of it that break in production.</p>
+</header>
+<article><h1>Field notes from playsolitaire: what 99 browser solitaire games actually load</h1><time>2026-11-12</time>
+<h2>One game page is easy. Ninety-nine is a scheduling problem</h2>
+<p>A single solitaire page is a solved problem: put one <code>&lt;iframe&gt;</code> in the markup and walk away. A catalogue is not the same job, because every board you add also adds a decision about <em>when</em> it is allowed to run.</p>
+<p>The landing page states the scope up front: 99 free solitaire games, Klondike, Spider, FreeCell, TriPeaks and more, no account and no download. It is not one flat list either. The families are split into their own sections — Klondike with 12 games, Spider with 9, TriPeaks with 9, and a catch-all "More" bucket holding 53 — and each of those has its own index page. Underneath sits a full all-games index, a collections page for the multi-game bundles, and a separate page for every individual title. If you are the sort of person who opens devtools before you open the game, that shape is the first thing worth understanding.</p>
+<h2>Click-to-load: what the placeholder buys and what it costs</h2>
+<p>Open any individual game page and the board is not what you see first. You see a placeholder with this line on it:</p>
+<blockquote><p>Click to load — the game loads from html5.gamemonetize.co</p></blockquote>
+<p>The board is created after the click, and the title itself is served by a third-party HTML5 embed host. That is a deliberate trade, and it shows up in four places:</p>
+<ul><li><strong>The first response is markup, not a game.</strong> Whatever arrives on the initial request is a page frame and a placeholder; the game payload is deferred until a real click. That keeps the catalogue browsable without dragging 99 embeds along with it.</li><li><strong>"Page loaded" and "game ready" are two different events.</strong> If you are timing anything, a <code>load</code> handler tells you the placeholder rendered, not that a board exists. Time from the click.</li><li><strong>Focus is manual.</strong> A placeholder has nothing to tab into. Keyboard play only becomes possible after the click hands focus to the embed, and how well that handover works depends on the build behind it.</li><li><strong>A plain HTTP client sees none of it.</strong> <code>curl</code> gets the page and the placeholder. There is no canvas, no board state, nothing to inspect. Debugging has to happen in a real browser session.</li></ul>
+<h2>The fullscreen button belongs to the game, not the browser</h2>
+<p>Each game page spells this out: fullscreen is the ⛶ button inside the game. So the embed's own fullscreen mode is a separate layer from your browser's fullscreen, and what the Escape key does afterwards is up to whichever build you happen to be in. Worth knowing before you build a habit around one particular title, because the hotkeys are not standardised across the catalogue.</p>
+<h2>The rule write-ups are the most useful part of the pages</h2>
+<p>Here is the thing that is easy to miss: the family pages do not just list titles, they explain the rules, and the details are correct.</p>
+<p>Spider, for example: ten tableau columns, the first four holding six cards and the remaining six holding five, only the top card of each face up. You may stack mixed suits in the tableau, but only a same-suit descending run can be picked up and moved as a group — which is the rule most people get wrong. And you cannot deal a new row from the stock while any column is empty; fill every column first. Eight completed King-to-Ace runs clear the table.</p>
+<p>Klondike is covered with the same care, including the honest answer to a question every solitaire player eventually asks: no, not every deal is winnable. Roughly a third of draw-three deals can be won with perfect play, and plenty are dead from the first card. The page also recommends draw-one as the forgiving version and the right place to start, which is the advice I would give too.</p>
+<p>When a catalogue is 99 builds from many different publishers, rule accuracy is one of the few quality signals you can actually check without asking anyone. If the rule text is right, the dev behind it was paying attention.</p>
+<h2>Where the catalogue stops being uniform</h2>
+<p>The builds are contributed by different people, so do not expect one set of habits to carry across all 99. Two examples from the pages themselves:</p>
+<ul><li><strong>Undo is not guaranteed.</strong> The answer given for Klondike is that most builds offer at least one step back, and that it varies by game. So before you experiment with a move you cannot reverse, check whether that title has an undo control at all.</li><li><strong>Progress is not saved.</strong> The collections page is blunt about it: collections do not usually save your progress, and each game should be treated as a standalone session. Nothing here is an account-backed service, so there is no server-side state to fall back on.</li></ul>
+<p>That second point is the one that bites. A stateless catalogue means every reload is a fresh deal, which is fine for a hand of cards and annoying if you assumed otherwise.</p>
+<h2>An afternoon test pass: six games, not ninety-nine</h2>
+<p>You do not need to walk all 99 titles to know whether the catalogue works for you. Sample across families — one Klondike, one Spider, one FreeCell, one TriPeaks, one Golf, one bundle — and answer the same questions for each:</p>
+<pre><code>per game:
+  placeholder appears, click creates the board?
+  keyboard reaches the embed after the click? arrows/space do anything?
+  the in-game fullscreen button works, and Escape exits it?
+  reload: does progress survive? (assume no until proven otherwise)
+  narrow window / portrait: are the controls still reachable?</code></pre>
+<p>Two or three games will differ from the rest. Those differences are the whole reason a one-game page and a 99-game catalogue are not the same problem.</p>
+<h2>If you only want to play a hand</h2>
+<p>The operational advice is short: go in through the family index rather than the all-games list, pick a title, and accept that each session starts clean. If the goal is simply a hand of Klondike between two deploys, <a href="https://playsolitaire.top/">playsolitaire</a> takes you from landing page to a dealt board without an install step or a signup wall, which is really the only requirement for a game you play in a spare five minutes.</p>
+<p>Everything else on this page is the stuff you notice when you spend the five minutes looking at the plumbing instead.</p></article>
+<footer class="site">
+  <p>Tom Hargreaves</p>
+</footer>
+</div>
+</body>
+</html>
