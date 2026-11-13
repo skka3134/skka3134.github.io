@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>巨魔装包实录：版本档、砸壳包和下载环节的三个卡点</title>
+<meta name="description" content="巨魔和自签是两条路，包装不上反复下没用。按系统版本区间挑砸壳包、读懂介绍栏、避开下载环节的三个卡点。">
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0f1115;color:#d7dbe0;
+     font:16px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:720px;margin:0 auto;padding:48px 22px 90px}
+a{color:#7dd3fc;text-decoration:none}
+a:hover{text-decoration:underline}
+header.site{border-bottom:1px solid #21262d;padding-bottom:22px;margin-bottom:38px}
+header.site h1{margin:0 0 8px;font-size:24px;letter-spacing:-.02em}
+header.site p{margin:0;color:#8b949e;font-size:14px}
+article h1{font-size:30px;line-height:1.25;letter-spacing:-.02em;margin:0 0 8px}
+article time{color:#8b949e;font-size:13px}
+article h2{font-size:21px;margin:34px 0 10px;letter-spacing:-.01em}
+article h3{font-size:17px;margin:26px 0 8px}
+article p{margin:14px 0}
+article ul,article ol{margin:14px 0;padding-left:22px}
+article li{margin:6px 0}
+article code{background:#1c2128;padding:2px 6px;border-radius:4px;font-size:14px;
+             font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+article pre{background:#161b22;border:1px solid #21262d;border-radius:8px;
+            padding:14px 16px;overflow-x:auto}
+article pre code{background:none;padding:0;font-size:13px;line-height:1.6}
+article blockquote{border-left:3px solid #30363d;margin:16px 0;padding:2px 0 2px 16px;color:#9ba3ad}
+ul.posts{list-style:none;padding:0;margin:0}
+ul.posts li{border-bottom:1px solid #21262d;padding:20px 0}
+ul.posts li:last-child{border-bottom:0}
+ul.posts h2{margin:0 0 6px;font-size:19px;font-weight:600}
+ul.posts h2 a{color:#e6edf3}
+ul.posts h2 a:hover{color:#7dd3fc}
+ul.posts time{color:#8b949e;font-size:13px}
+ul.posts p{margin:8px 0 0;color:#9ba3ad;font-size:15px}
+footer.site{margin-top:60px;padding-top:22px;border-top:1px solid #21262d;
+            color:#6e7681;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+  <h1><a href="/" style="color:inherit">Tom Hargreaves</a></h1>
+  <p>Notes on automation, scraping, and the parts of it that break in production.</p>
+</header>
+<article><h1>巨魔装包实录：版本档、砸壳包和下载环节的三个卡点</h1><time>2026-11-13</time>
+<p>巨魔（TrollStore）和自签现在是两条路：自签拿个人证书签，七天一到就要重签一次；巨魔走的是系统签名校验上的漏洞，装上去就是长期的。这个区别决定了一件事——<strong>包装不上，反复下多少次都没用</strong>，先确认自己走哪条路再动手。</p>
+<p>站上的分工也是这么写的：首页那句是「支持巨魔（TrollStore）与自签安装」，顶上还单独挂着一个 P12 证书入口，专门给自签用。</p>
+<h2>按系统版本挑包，而不是按名字</h2>
+<p>这类站的结构其实很直白：三个分类，游戏是 <code>type=2</code>、应用是 <code>type=1</code>、其他是 <code>type=0</code>，搜索挂在 <code>?q=</code> 上。麻烦的是跟巨魔相关的那几条，得掂量着挑：</p>
+<ul><li><strong>砸壳包</strong> —— 名字里带 <code>Tetherless免越狱砸壳</code> 的，不是随便一条。它按系统区间分档，站上同时有 <code>iOS17.4-18_...</code> 和 <code>iOS26-27_...</code> 两条，点之前先看清楚自己手机落在哪个区间，选错档等于白下。</li><li><strong>工具类</strong> —— <code>Regitela监督模式</code>、<code>启用爱马仕表盘</code>、<code>Cloudn解析链接</code> 这种不是游戏，是装进巨魔环境里用的功能件。</li><li><strong>其余大部分</strong>才是普通应用和游戏。</li></ul>
+<p><code>Tetherless</code> 的意思是砸壳这一步不用越狱设备参与：把应用商店那份加密的 IPA 解成可以直接处理的包。所以它跟「装进手机」是两个动作，中间还隔着一层签名。</p>
+<h2>详情页真正决定成败的是介绍栏</h2>
+<p>版本号、文件大小、更新日期这三项看的是表面，能省掉来回试的其实是<strong>应用介绍</strong>。<code>Tetherless免越狱砸壳</code> 那两条的介绍里写着「该 IPA 未开源，需要登陆 ID，自行甄别使用」——也就是说它要你的账号，用不用自己判断，别当成没风险的干净包。</p>
+<p>一个顺手的小发现：同类推荐那一栏就是版本档的索引，从 <code>iOS26-27</code> 那条的推荐位可以直接串到 <code>iOS17.4-18</code> 那条。</p>
+<h2>下载那一下的三个卡点</h2>
+<pre><code>点「立即下载 iPA」
+  → 先开一个新窗口
+  → 同时向后端要一次真实地址（/api/download/&lt;id&gt;）
+  → 拿到地址才跳转</code></pre>
+<ul><li>浏览器拦弹窗时，流程会停在「获取中…」；</li><li>按钮会禁用大约四秒，等它自己恢复，连点会撞上「请求过于频繁，请稍后再试」；</li><li>后端返 403 时页面会把原因原文贴出来，那句话比一句「下载失败」有用得多。</li></ul>
+<p>还有一点容易误判：首页图片里写死的卡片只有十几张，剩下的靠接口拉（单条走 <code>/api/app/&lt;id&gt;</code>），所以别拿「源码里没搜到」当成「站上没有」。</p>
+<h2>装不上时，反馈怎么写才有人回</h2>
+<p>详情页底部那个入口跳转时会自动带上<strong>应用名、版本、大小</strong>三个参数，从详情页点进去最省事，不用自己抄版本号。反馈页把问题分成五类：安装失败 / 闪退打不开 / 下载问题 / 求资源 / 其它，描述框上限 1000 字。</p>
+<p>写的时候把「系统版本 + 走的是巨魔还是自签 + 报错原文」一起写进去，比一句「装不上」强得多——页面给的例子就是「装不上，提示签名无效；或者打开就闪退，手机上系统是 iOS 17」。</p>
+<h2>照这个顺序做</h2>
+<ol><li>手机上先确认自己是巨魔还是自签；</li><li>回站里按系统区间选版本档，<code>type</code> 参数分游戏/应用/其他，搜索用 <code>?q=</code>；</li><li>详情页重点读介绍栏，别只看图标；</li><li>下载时留着弹窗权限，别连点；</li><li>出问题从详情页底部进反馈，带上版本和大小。</li></ol>
+<p>一个个版本档手动试最费时间，字段齐全的站能省掉这一半功夫。<a href="https://3web.top/">巨魔</a> 这一类资源每天都有更新，先看分类、再看体积、最后看更新日期，剩下的交给签名工具。</p></article>
+<footer class="site">
+  <p>Tom Hargreaves</p>
+</footer>
+</div>
+</body>
+</html>
