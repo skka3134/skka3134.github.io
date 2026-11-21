@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>查查漫画找污 污 漫畫时，先分清热度排行、最近更新和收藏</title>
+<meta name="description" content="根据查查漫画首页、热度排行页和最近更新页的实际页面结构，整理第一次使用时该先点哪里、收藏为什么要 Telegram 登录，以及更顺手的浏览顺序。">
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0f1115;color:#d7dbe0;
+     font:16px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:720px;margin:0 auto;padding:48px 22px 90px}
+a{color:#7dd3fc;text-decoration:none}
+a:hover{text-decoration:underline}
+header.site{border-bottom:1px solid #21262d;padding-bottom:22px;margin-bottom:38px}
+header.site h1{margin:0 0 8px;font-size:24px;letter-spacing:-.02em}
+header.site p{margin:0;color:#8b949e;font-size:14px}
+article h1{font-size:30px;line-height:1.25;letter-spacing:-.02em;margin:0 0 8px}
+article time{color:#8b949e;font-size:13px}
+article h2{font-size:21px;margin:34px 0 10px;letter-spacing:-.01em}
+article h3{font-size:17px;margin:26px 0 8px}
+article p{margin:14px 0}
+article ul,article ol{margin:14px 0;padding-left:22px}
+article li{margin:6px 0}
+article code{background:#1c2128;padding:2px 6px;border-radius:4px;font-size:14px;
+             font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+article pre{background:#161b22;border:1px solid #21262d;border-radius:8px;
+            padding:14px 16px;overflow-x:auto}
+article pre code{background:none;padding:0;font-size:13px;line-height:1.6}
+article blockquote{border-left:3px solid #30363d;margin:16px 0;padding:2px 0 2px 16px;color:#9ba3ad}
+ul.posts{list-style:none;padding:0;margin:0}
+ul.posts li{border-bottom:1px solid #21262d;padding:20px 0}
+ul.posts li:last-child{border-bottom:0}
+ul.posts h2{margin:0 0 6px;font-size:19px;font-weight:600}
+ul.posts h2 a{color:#e6edf3}
+ul.posts h2 a:hover{color:#7dd3fc}
+ul.posts time{color:#8b949e;font-size:13px}
+ul.posts p{margin:8px 0 0;color:#9ba3ad;font-size:15px}
+footer.site{margin-top:60px;padding-top:22px;border-top:1px solid #21262d;
+            color:#6e7681;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+  <h1><a href="/" style="color:inherit">Tom Hargreaves</a></h1>
+  <p>Notes on automation, scraping, and the parts of it that break in production.</p>
+</header>
+<article><h1>查查漫画找污 污 漫畫时，先分清热度排行、最近更新和收藏</h1><time>2026-11-21</time>
+<p>很多漫画站打开之后，首页就是一堆封面，点进去才发现不是想找的类型。查查漫画的页面结构其实不复杂，但第一次用的时候，把入口分清会省不少时间。如果你是冲着<a href="https://chachamh.top/">污 污 漫畫</a>去的，先别急着一路往下翻，先看首页上三个最显眼的入口：热度排行、最近更新、我的收藏。</p>
+<h2>首页先看什么</h2>
+<p>查查漫画首页顶部的导航很短，能直接看到的入口有“赞助免广告”“联系”“我的收藏”。页面主体往下是两个区块：“热度排行”和“最近更新”，每个区块右侧都有“更多 →”。</p>
+<p>这几个入口各管一件事：</p>
+<ul><li><strong>热度排行</strong>：适合不知道从哪部开始，想先看别人点得多的作品。</li><li><strong>最近更新</strong>：适合追连载，想确认最近有没有新内容。</li><li><strong>我的收藏</strong>：适合把看过或想继续看的作品留住，但它不是点开就能用。</li></ul>
+<p>先把这三个入口的用途分开，后面的浏览就不会乱。</p>
+<h2>热度排行适合找起点</h2>
+<p>从首页点“热度排行”右侧的“更多 →”，会进入 <code>/hot</code> 页面。这个页面的标题就是“热度排行”，下面按顺序列出漫画封面和名称。</p>
+<p>我打开时能看到的作品包括《朋友妈妈我天菜》《欲望入门课》《在大企业当废柴 [无修正]》《成人漫画取材课》《一家有多妻》《神秘的桌游》《魔法少女露美娜》《疫情期间的家教生活 [无修正]》等。页面是一排排封面往下铺，不需要先理解复杂筛选，直接扫封面和标题就能决定要不要点。</p>
+<p>这个入口适合两种情况：</p>
+<ol><li><strong>第一次进站，不知道看什么</strong>。先从排行靠前的作品里挑题材顺眼的，比随机翻首页更快。</li><li><strong>想找热度高的老作品</strong>。最近更新页会被新内容占满，排行页更容易看到一直有人看的作品。</li></ol>
+<p>它不适合用来判断“今天有没有更新”。排行说明的是热度，不是更新时间。</p>
+<h2>最近更新适合追连载</h2>
+<p>首页另一个区块“最近更新”对应 <code>/latest</code> 页面。这个页面按最近更新列出漫画，封面和标题直接展示，我打开时能看到《一次就上瘾》《堕落的人生》《废柴逃脱》《神似初恋的她》《满溢游泳池》《指导女大生》《爸爸，请进！》等条目。</p>
+<p>用最近更新页的时候，有一个简单判断：</p>
+<ul><li>如果你只想找新东西，直接从上往下扫。</li><li>如果你之前看过某部作品，先在最近更新里找它的名字，比回首页碰运气快。</li><li>如果你点进去发现不是自己想追的类型，马上退回列表，不要在单页里来回跳。</li></ul>
+<p>最近更新页解决的是“有没有新内容”，不是“这部值不值得看”。所以更稳的做法是：用最近更新发现作品，用热度排行判断它是不是长期有人看的内容。</p>
+<h2>收藏前要知道 Telegram 登录</h2>
+<p>导航里的“我的收藏”指向收藏页。直接点进去时，页面会弹出提示：“请先登录 登录 Telegram 后即可查看你的收藏漫画。”</p>
+<p>这一步很多人第一次会卡住，因为它不是站内账号密码那种常见登录框。实际含义很明确：收藏功能要先完成 Telegram 登录，没登录就看不到自己的收藏漫画。</p>
+<p>使用前可以先想清楚两件事：</p>
+<ul><li><strong>只是临时看一两部</strong>：不一定需要急着登录，先用热度排行和最近更新就够。</li><li><strong>准备长期追几部</strong>：再去处理登录，这样收藏才有意义。</li></ul>
+<p>另外，首页导航里还有“赞助免广告”和“联系”入口。联系入口是 Telegram 机器人方向，收藏登录也和 Telegram 有关；操作时分清“联系”和“收藏登录”是两个不同入口，别点错。</p>
+<h2>一个更顺手的浏览顺序</h2>
+<p>如果不想每次都从首页乱点，可以按这个顺序：</p>
+<ol><li><strong>先开热度排行</strong>：挑 1 到 2 部题材对的作品。</li><li><strong>再看最近更新</strong>：确认自己感兴趣的作品最近有没有动静。</li><li><strong>确定要长期追再用收藏</strong>：遇到 Telegram 登录提示时，再决定要不要登录。</li><li><strong>回到列表继续筛</strong>：不要在一部作品上耗太久，先用列表页做筛选。</li></ol>
+<p>查查漫画的入口不多，真正好用的就是把排行、更新、收藏分开用。排行负责发现，更新负责跟进，收藏负责留住；顺序对了，找内容的时间会少很多。</p></article>
+<footer class="site">
+  <p>Tom Hargreaves</p>
+</footer>
+</div>
+</body>
+</html>
