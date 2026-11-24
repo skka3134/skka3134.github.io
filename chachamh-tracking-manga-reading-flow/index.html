@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>追更漫画时别在 halfway 断掉：查查漫画的搜索、章节与阅读器流程</title>
+<meta name="description" content="从搜索到章节跳转，记录在查查漫画追更时容易断掉的环节与对应的处理办法。">
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0f1115;color:#d7dbe0;
+     font:16px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:720px;margin:0 auto;padding:48px 22px 90px}
+a{color:#7dd3fc;text-decoration:none}
+a:hover{text-decoration:underline}
+header.site{border-bottom:1px solid #21262d;padding-bottom:22px;margin-bottom:38px}
+header.site h1{margin:0 0 8px;font-size:24px;letter-spacing:-.02em}
+header.site p{margin:0;color:#8b949e;font-size:14px}
+article h1{font-size:30px;line-height:1.25;letter-spacing:-.02em;margin:0 0 8px}
+article time{color:#8b949e;font-size:13px}
+article h2{font-size:21px;margin:34px 0 10px;letter-spacing:-.01em}
+article h3{font-size:17px;margin:26px 0 8px}
+article p{margin:14px 0}
+article ul,article ol{margin:14px 0;padding-left:22px}
+article li{margin:6px 0}
+article code{background:#1c2128;padding:2px 6px;border-radius:4px;font-size:14px;
+             font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+article pre{background:#161b22;border:1px solid #21262d;border-radius:8px;
+            padding:14px 16px;overflow-x:auto}
+article pre code{background:none;padding:0;font-size:13px;line-height:1.6}
+article blockquote{border-left:3px solid #30363d;margin:16px 0;padding:2px 0 2px 16px;color:#9ba3ad}
+ul.posts{list-style:none;padding:0;margin:0}
+ul.posts li{border-bottom:1px solid #21262d;padding:20px 0}
+ul.posts li:last-child{border-bottom:0}
+ul.posts h2{margin:0 0 6px;font-size:19px;font-weight:600}
+ul.posts h2 a{color:#e6edf3}
+ul.posts h2 a:hover{color:#7dd3fc}
+ul.posts time{color:#8b949e;font-size:13px}
+ul.posts p{margin:8px 0 0;color:#9ba3ad;font-size:15px}
+footer.site{margin-top:60px;padding-top:22px;border-top:1px solid #21262d;
+            color:#6e7681;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+  <h1><a href="/" style="color:inherit">Tom Hargreaves</a></h1>
+  <p>Notes on automation, scraping, and the parts of it that break in production.</p>
+</header>
+<article><h1>追更漫画时别在 halfway 断掉：查查漫画的搜索、章节与阅读器流程</h1><time>2026-11-24</time>
+<p># 追更漫画时别在 halfway 断掉：查查漫画的搜索、章节与阅读器流程</p>
+<p>追更最怕的不是找不到，而是找到了却在 halfway 断掉——搜到一半、点开一半、读到一半。把查查漫画的整条阅读链路拆开看一遍，能避开大部分断点。</p>
+<h2>一、站点结构：先认清楚两条主线</h2>
+<p>首页不是单一列表，而是两个并列区块：</p>
+<ul><li><strong>热度排行</strong>：按 <code>views</code> 排序，入口 <code>/hot</code></li><li><strong>最近更新</strong>：按 <code>updated</code> 排序，入口 <code>/latest</code></li></ul>
+<p>两条线都只展示 12 本，首页下方才是完整分页列表（每页 36 本）。追更的人通常从「最近更新」进，找新章节；想补坑的人从「热度排行」进。认错入口会把时间浪费在翻页上。</p>
+<h2>二、搜索：关键词匹配，别指望模糊</h2>
+<p>搜索框 placeholder 是「搜索漫画...」，回车即跳转到 <code>/?q=关键词</code>。两点要注意：</p>
+<ol><li>搜索结果页会把 robots 设为 <code>noindex, follow</code>，也就是说搜索页本身不被收录，但里面的链接可以被爬到。所以<strong>分享链接时别发搜索结果页</strong>，发详情页。</li><li>搜索是精确匹配导向，标题里没有的词基本搜不到。如果一部漫画的章节名是「第1部分」「第2部分」，按剧情关键词搜往往无结果，得先搜到系列名再进详情页。</li></ol>
+<h2>三、详情页：封面、章节、开始阅读</h2>
+<p>详情页 URL 形如 <code>/detail?id=6</code>（数字 id），页面顶部是封面 + 标题 + 「开始阅读」按钮。下方是章节目录，每项显示章节名（如「朋友妈妈我天菜 1-7话」「8-9话」），点击直接跳 <code>/read?id=6&amp;chapter=0</code>。</p>
+<p>几个细节：</p>
+<ul><li>章节号从 0 开始（<code>chapter=0</code> 是第一章），分享链接时别把 0 当成「未开始」。</li><li>「开始阅读」按钮会先发一个 POST 到 <code>/api/comic/{id}/view</code> 记一次浏览，再跳转；如果网络抖动，按钮点下去可能要等半秒才跳。</li><li>封面图放在海外服务器，页面提示「加载慢？开代理会快很多」。不开代理也能读，但首屏封面和章节缩略图可能白几秒。</li></ul>
+<h2>四、阅读器：图片 overseas，失败要重试</h2>
+<p>阅读页 <code>/read?id=...&amp;chapter=...</code> 是纯图片流。图片 overseas 这一点决定了体验：</p>
+<ul><li><strong>WiFi 下</strong>：基本无感。</li><li><strong>移动网络</strong>：部分运营商对 overseas 图床限速，翻页会卡。</li><li><strong>失败时</strong>：页面有「漫画打不开或图片出错？点这里告诉我们」的反馈入口 <code>/feedback</code>，别直接关页面，先点反馈，运营方才能定位是哪一章的图挂了。</li></ul>
+<h2>五、追更时的三个高频断点</h2>
+<h3>1. 断在「搜不到」</h3>
+<p>搜不到时先确认：是不是搜的是章节名而不是系列名？系列名通常在封面下方的标题里，章节名只是「第X部分」。先把系列名记下来，下次直接搜系列名。</p>
+<h3>2. 断在「章节号对不上」</h3>
+<p>章节 URL 的 <code>chapter</code> 参数从 0 起。如果你上次读到「8-9话」，对应的 chapter 值不是 8，而是 1（因为 0=1-7话，1=8-9话）。分享进度时发完整 URL，别只发章节号。</p>
+<h3>3. 断在「图加载慢」</h3>
+<p>overseas 图床在高峰期会慢。处理顺序：</p>
+<ol><li>等 5-10 秒，图片 often 是懒加载，滚动一下触发。</li><li>切换网络（WiFi ↔ 移动数据）。</li><li>开代理。</li><li>还不行就点 <code>/feedback</code> 反馈具体章节。</li></ol>
+<h2>六、站点本身的一些事实</h2>
+<ul><li>内容来源于网络，页面底部声明「本站内容来源于网络，仅供学习交流，请于下载后 24 小时内删除」。</li><li>评分 meta 标为 adult，页面带 <code>rating: RTA-5042-1996-1400</code>。</li><li>结构化数据用 <code>ComicSeries</code>，带 <code>numberOfEpisodes</code>，方便搜索引擎理解章节规模。</li><li>详情页的 canonical 是 <code>/detail?id=数字</code>，不是 comic_id 字符串；分享时用数字 id 更稳。</li></ul>
+<h2>七、把追更做成固定流程</h2>
+<p>把追更拆成三步，断点就少一大半：</p>
+<ol><li><strong>搜系列名</strong> → 进详情页 → 看章节目录确认最新章节。</li><li><strong>点「开始阅读」或直接点最新章节</strong> → 记下 URL（含 <code>chapter=</code>）。</li><li><strong>读完后把 URL 存到备忘录</strong>，下次直接打开，跳过搜索。</li></ol>
+<p>如果你在找 <a href="https://chachamh.top/">色情 漫畫</a> 这类资源，以上流程同样适用：先搜系列名，再进详情页确认章节目录，最后把阅读 URL 存下来，下次直接打开就能接着读，不用每次重新搜。</p>
+<h2>八、小结</h2>
+<p>追更漫画的断点几乎都发生在「搜 → 详情 → 章节 → 阅读」这四步之间。把每一步的 URL 形式记清楚（<code>/detail?id=数字</code>、<code>/read?id=...&amp;chapter=从0起</code>），把进度 URL 存下来，就能把断点压到最低。</p></article>
+<footer class="site">
+  <p>Tom Hargreaves</p>
+</footer>
+</div>
+</body>
+</html>
