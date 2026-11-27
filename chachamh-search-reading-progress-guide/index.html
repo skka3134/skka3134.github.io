@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>色情 漫畫阅读站怎么用：搜索、续读与本地进度</title>
+<meta name="description" content="不注册也能用查查漫画：标题搜索、章节续读、本地进度清理，以及第三方广告和日志带来的隐私边界。换成浏览器或清除站点数据后，进度不会自动跟过去。">
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0f1115;color:#d7dbe0;
+     font:16px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:720px;margin:0 auto;padding:48px 22px 90px}
+a{color:#7dd3fc;text-decoration:none}
+a:hover{text-decoration:underline}
+header.site{border-bottom:1px solid #21262d;padding-bottom:22px;margin-bottom:38px}
+header.site h1{margin:0 0 8px;font-size:24px;letter-spacing:-.02em}
+header.site p{margin:0;color:#8b949e;font-size:14px}
+article h1{font-size:30px;line-height:1.25;letter-spacing:-.02em;margin:0 0 8px}
+article time{color:#8b949e;font-size:13px}
+article h2{font-size:21px;margin:34px 0 10px;letter-spacing:-.01em}
+article h3{font-size:17px;margin:26px 0 8px}
+article p{margin:14px 0}
+article ul,article ol{margin:14px 0;padding-left:22px}
+article li{margin:6px 0}
+article code{background:#1c2128;padding:2px 6px;border-radius:4px;font-size:14px;
+             font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+article pre{background:#161b22;border:1px solid #21262d;border-radius:8px;
+            padding:14px 16px;overflow-x:auto}
+article pre code{background:none;padding:0;font-size:13px;line-height:1.6}
+article blockquote{border-left:3px solid #30363d;margin:16px 0;padding:2px 0 2px 16px;color:#9ba3ad}
+ul.posts{list-style:none;padding:0;margin:0}
+ul.posts li{border-bottom:1px solid #21262d;padding:20px 0}
+ul.posts li:last-child{border-bottom:0}
+ul.posts h2{margin:0 0 6px;font-size:19px;font-weight:600}
+ul.posts h2 a{color:#e6edf3}
+ul.posts h2 a:hover{color:#7dd3fc}
+ul.posts time{color:#8b949e;font-size:13px}
+ul.posts p{margin:8px 0 0;color:#9ba3ad;font-size:15px}
+footer.site{margin-top:60px;padding-top:22px;border-top:1px solid #21262d;
+            color:#6e7681;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+  <h1><a href="/" style="color:inherit">Tom Hargreaves</a></h1>
+  <p>Notes on automation, scraping, and the parts of it that break in production.</p>
+</header>
+<article><h1>色情 漫畫阅读站怎么用：搜索、续读与本地进度</h1><time>2026-11-27</time>
+<p>查查漫画是一个漫画目录与在线阅读索引站。首页把「热度排行」和「最近更新」分开，顶部有搜索框；详情页提供封面、章节目录和阅读入口。<a href="https://chachamh.top/">色情 漫畫</a> 的使用流程比较直接，但搜索范围、续读记录和隐私设置有几处容易误解。</p>
+<h2>搜索匹配的是标题，不是正文全文</h2>
+<p>在首页输入关键词后，页面会跳到带 <code>q</code> 参数的地址，例如：</p>
+<pre><code>https://chachamh.top/?q=关键词</code></pre>
+<p>页面脚本会先取得漫画列表，再筛选标题字段包含关键词的条目。因此，人物名如果出现在标题里，可以试着搜；如果想靠剧情介绍、对白或作者说明来找，就不能把它当全文搜索用。</p>
+<p>搜不到时，先缩短关键词，再去掉书名号、空格和「无修正」等附加词。一次搜不到并不代表站内没有相关作品，也可能只是标题写法不同。</p>
+<h2>详情页的章节编号从 0 开始</h2>
+<p>从封面进入详情页后，可以看到章节目录、章节总数和排序按钮。点击「开始阅读」时，地址通常类似：</p>
+<pre><code>https://chachamh.top/read?id=17&amp;chapter=0</code></pre>
+<p>这里的 <code>chapter=0</code> 表示第一章，不是第一页。第二话是 <code>chapter=1</code>，以此类推。手动改地址跳转时，别把第一话写成 <code>chapter=1</code>，否则会直接跳过开头。</p>
+<p>如果当前浏览器已经读过这部作品，详情页会读取本地进度，把按钮改成「继续阅读（第 N 话）」，并把链接指向保存的章节。这个记录按作品保存，不是全站共用一个「上次读到哪」。</p>
+<h2>阅读页的左右方向键切的是章节</h2>
+<p>阅读页采用连续滚动展示图片，顶部有阅读进度条。向下滚动时，顶栏和底部导航会自动收起；点击图片区域可以切换显示或隐藏导航。</p>
+<p>键盘操作里有两个容易踩的点：</p>
+<ul><li><code>←</code> 和 <code>→</code> 切换上一话、下一话，不是翻到上一张、下一张图片。</li><li><code>Home</code> 回到页面顶部。</li></ul>
+<p>第一章的「上一话」和最后一章的「下一话」会变成不可用状态。图片加载失败时，页面可能显示「本章节暂无图片」或「漫画加载失败」，这类提示不一定代表整部作品被删除，也可能是单次请求没有成功。</p>
+<h2>续读进度只存在当前浏览器</h2>
+<p>阅读页把进度写进浏览器 <code>localStorage</code>，键名是 <code>ccm_progress</code>。每条记录包含章节、估算页数、标题和时间戳。页面会在进入章节时保存一次，也会在滚动后定时更新。</p>
+<p>这意味着：</p>
+<ul><li>同一浏览器、同一站点地址下，重新打开详情页可以继续读。</li><li>换手机、换电脑或换浏览器，记录不会自动同步。</li><li>清除站点数据、清理浏览器存储，或者使用不支持持久存储的浏览环境，进度可能消失。</li></ul>
+<p>所以不要把本地进度当备份。真想确认保存在哪里，可以在浏览器开发者工具里打开 <code>Application → Local Storage</code>，找到当前站点下的 <code>ccm_progress</code>。不想保留时，删除这个键即可；如果直接清除整站站点数据，其他本地设置也可能一起被清掉。</p>
+<h2>不注册不等于完全没有数据留下</h2>
+<p><a href="https://chachamh.top/privacy">隐私政策</a>写明，本站不要求注册，不收集手机号、身份证件和支付信息；阅读偏好与进度主要留在用户设备上。</p>
+<p>但站点仍会通过 Cloudflare 产生访问日志，包括 IP 地址、浏览器类型、访问时间和请求页面；站内搜索词也会用于显示结果。隐私政策还列出了 Google Analytics 和可能的第三方广告服务，广告方可能使用 Cookie 做频次控制或兴趣投放。</p>
+<p>如果不想接受个性化广告，可以在浏览器里限制第三方 Cookie，或使用广告拦截插件。隐私政策说明，清除或禁用 Cookie 不影响站点主体功能。</p>
+<p><a href="https://chachamh.top/terms">服务条款</a>另外明确：本站不提供付费会员、充值或打赏；内容按现状展示，不保证完整或持续可用，也禁止用自动化程序高频抓取、影响其他用户访问。</p>
+<h2>最短使用流程</h2>
+<ol><li>首页输入标题关键词，打开搜索结果。</li><li>在详情页确认章节，点「开始阅读」或「继续阅读」。</li><li>用滚动看图片，用左右方向键换章节。</li><li>需要清理记录时，删除 <code>ccm_progress</code>，或清除该站点的浏览器数据。</li></ol>
+<p>本站仅面向成年人。若你未满 18 周岁或未达到所在地区的法定成年年龄，请不要访问。</p></article>
+<footer class="site">
+  <p>Tom Hargreaves</p>
+</footer>
+</div>
+</body>
+</html>
