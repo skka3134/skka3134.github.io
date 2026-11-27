@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A captcha number image contract test for payloads, polling, and expiry</title>
+<meta name="description" content="Test captcha number image integrations without paying for duplicate jobs: payload shape, polling, result parsing, and expiry.">
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0f1115;color:#d7dbe0;
+     font:16px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:720px;margin:0 auto;padding:48px 22px 90px}
+a{color:#7dd3fc;text-decoration:none}
+a:hover{text-decoration:underline}
+header.site{border-bottom:1px solid #21262d;padding-bottom:22px;margin-bottom:38px}
+header.site h1{margin:0 0 8px;font-size:24px;letter-spacing:-.02em}
+header.site p{margin:0;color:#8b949e;font-size:14px}
+article h1{font-size:30px;line-height:1.25;letter-spacing:-.02em;margin:0 0 8px}
+article time{color:#8b949e;font-size:13px}
+article h2{font-size:21px;margin:34px 0 10px;letter-spacing:-.01em}
+article h3{font-size:17px;margin:26px 0 8px}
+article p{margin:14px 0}
+article ul,article ol{margin:14px 0;padding-left:22px}
+article li{margin:6px 0}
+article code{background:#1c2128;padding:2px 6px;border-radius:4px;font-size:14px;
+             font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+article pre{background:#161b22;border:1px solid #21262d;border-radius:8px;
+            padding:14px 16px;overflow-x:auto}
+article pre code{background:none;padding:0;font-size:13px;line-height:1.6}
+article blockquote{border-left:3px solid #30363d;margin:16px 0;padding:2px 0 2px 16px;color:#9ba3ad}
+ul.posts{list-style:none;padding:0;margin:0}
+ul.posts li{border-bottom:1px solid #21262d;padding:20px 0}
+ul.posts li:last-child{border-bottom:0}
+ul.posts h2{margin:0 0 6px;font-size:19px;font-weight:600}
+ul.posts h2 a{color:#e6edf3}
+ul.posts h2 a:hover{color:#7dd3fc}
+ul.posts time{color:#8b949e;font-size:13px}
+ul.posts p{margin:8px 0 0;color:#9ba3ad;font-size:15px}
+footer.site{margin-top:60px;padding-top:22px;border-top:1px solid #21262d;
+            color:#6e7681;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+  <h1><a href="/" style="color:inherit">Tom Hargreaves</a></h1>
+  <p>Notes on automation, scraping, and the parts of it that break in production.</p>
+</header>
+<article><h1>A captcha number image contract test for payloads, polling, and expiry</h1><time>2026-11-27</time>
+<p>A captcha number image integration has three separate contracts: the bytes you upload, the asynchronous job you poll, and the answer you put back into the form. A demo can exercise all three once and still hide expensive failures. The useful tests are the ones that pin down what happens when each contract is slightly wrong.</p>
+<h2>Test the request before sending a live image</h2>
+<p>The API reference defines <code>image_data</code> as a required array. Each entry can be raw base64 or a data URI. That array matters: a shorter mathematical-captcha example shows a bare base64 string, while the API quickstart and request-body documentation use a one-element array. Build the client against the documented array shape and keep a test that rejects accidental changes.</p>
+<p>Start with a local request-building test. It should not contact the service:</p>
+<pre><code>import base64
+from pathlib import Path
+
+URL = &quot;https://fuckcaptcha.top/v1/recognition/textcaptcha&quot;
+
+
+def build_submit(image_path, key):
+    image = Path(image_path).read_bytes()
+    encoded = base64.b64encode(image).decode(&quot;ascii&quot;)
+    headers = {
+        &quot;Authorization&quot;: f&quot;Basic {key}&quot;,
+        &quot;Content-Type&quot;: &quot;application/json&quot;,
+    }
+    payload = {&quot;image_data&quot;: [encoded]}
+    return URL, headers, payload, image
+
+
+def test_submit_shape():
+    key = &quot;nsk_test_key&quot;
+    url, headers, payload, original = build_submit(&quot;fixture.png&quot;, key)
+
+    assert url.endswith(&quot;/v1/recognition/textcaptcha&quot;)
+    assert headers[&quot;Authorization&quot;] == &quot;Basic nsk_test_key&quot;
+    assert isinstance(payload[&quot;image_data&quot;], list)
+    assert len(payload[&quot;image_data&quot;]) == 1
+    assert base64.b64decode(payload[&quot;image_data&quot;][0]) == original</code></pre>
+<p>This catches two easy mistakes. First, the key goes directly after <code>Basic</code>; it is not base64-encoded. Second, decoding <code>image_data[0]</code> must reproduce the original file byte for byte. A screenshot that is blank, transparent, or from the wrong frame can still pass a JSON-schema test, so keep the original fixture beside the test and inspect it when image-extraction code changes.</p>
+<h3>Keep cookies out of the recognition test</h3>
+<p>The mathematical-captcha guide says recognition needs only the image, not the target site's session. Your client should put the answer back into its own browser or scraper session, but the recognition request itself does not need those cookies. A test that compares the outgoing headers against an exact allowlist will catch accidental session leakage.</p>
+<h2>Poll one job ID, not a new job every cycle</h2>
+<p>Submitting an image returns a job ID, not the answer:</p>
+<pre><code>{&quot;data&quot;:&quot;nsj_example_job&quot;}</code></pre>
+<p>The result comes from a GET to the same recognition endpoint with that ID. While work is pending, the response contains <code>error: 14</code>. That means "ask again", not "submit again".</p>
+<pre><code>import time
+import requests
+
+URL = &quot;https://fuckcaptcha.top/v1/recognition/textcaptcha&quot;
+
+
+def poll_answer(job_id, key, timeout=170):
+    headers = {&quot;Authorization&quot;: f&quot;Basic {key}&quot;}
+    deadline = time.monotonic() + timeout
+    delay = 0.5
+
+    while time.monotonic() &lt; deadline:
+        response = requests.get(
+            URL,
+            headers=headers,
+            params={&quot;id&quot;: job_id},
+            timeout=10,
+        )
+        body = response.json()
+
+        if body.get(&quot;error&quot;) == 14:
+            time.sleep(delay)
+            delay = min(delay * 1.2, 3)
+            continue
+
+        if &quot;error&quot; in body:
+            raise RuntimeError(body)
+
+        values = body.get(&quot;data&quot;)
+        if not isinstance(values, list) or not values:
+            raise ValueError(f&quot;Unexpected result: {body!r}&quot;)
+        if not all(isinstance(value, str) for value in values):
+            raise ValueError(f&quot;Unexpected answer type: {body!r}&quot;)
+
+        return body
+
+    raise TimeoutError(job_id)</code></pre>
+<p>The client-side deadline is deliberately shorter than the service's three-minute recognition-job lifetime. The client can report a timeout while the job ID is still valid instead of discovering expiry at the same moment it stops waiting.</p>
+<h3>Make the state transitions explicit</h3>
+<p>Use a fake transport for these cases rather than repeatedly calling the live endpoint:</p>
+<ul><li>A submit response containing <code>error</code> is a rejected request. Bad parameters, no credit, or no upstream capacity do not charge the client.</li><li>A successful submit followed by <code>error: 14</code> means the same job is still running. Assert that no second POST occurs.</li><li>A successful submit followed by another error means the accepted job failed or timed out. That attempt was already charged and is not refunded.</li><li><code>error: 16</code> means there is not enough credit. Do not turn it into a tight retry loop; the documented quota resets daily at midnight Beijing time.</li><li>A local timeout should raise with the job ID attached so the failure can be traced without guessing which image was involved.</li></ul>
+<p>Nearly all API errors use HTTP 200. <code>response.ok</code> therefore cannot be the success condition; the JSON <code>error</code> field is the contract.</p>
+<h2>Unwrap the answer instead of assuming its type</h2>
+<p>The text-captcha example in the API reference returns:</p>
+<pre><code>{&quot;data&quot;:[&quot;H7K5&quot;],&quot;metadata&quot;:{}}</code></pre>
+<p>So the integration needs to unwrap <code>data</code> and handle its list of strings. Writing <code>result["data"]</code> directly into a form field can produce a string representation of a list rather than the recognized text.</p>
+<p>Add a second fixture for a data URI and verify that both input forms produce the same request structure after normalization. Keep malformed-result fixtures too: an empty list, a bare string where a list is expected, and an error body with HTTP 200. These tests cost nothing and protect the code that fills the form.</p>
+<h2>Keep the live smoke test small</h2>
+<p>Once the local contract tests pass, use one known image for a live check. The current API price list puts text-captcha image recognition at one credit per accepted call, and polling does not create another recognition charge. That makes a single smoke test reasonable; running every fixture against production is not.</p>
+<p>For the deployed check, <a href="https://fuckcaptcha.top/">captcha number image</a> exposes the text-captcha recognition path, while the <a href="https://fuckcaptcha.top/api">API reference</a> documents the request fields, job lifetime, result shapes, and error codes. The <a href="https://fuckcaptcha.top/topics/mathematical-captcha">mathematical-captcha guide</a> is useful for confirming that arithmetic images use the same <code>textcaptcha</code> endpoint rather than a separate type.</p>
+<p>The final assertion is simple: one image goes in, one job ID comes back, that ID is polled until completion or client timeout, and one recognized string goes into the form. Everything else is a failure mode worth testing before it reaches a paid request.</p></article>
+<footer class="site">
+  <p>Tom Hargreaves</p>
+</footer>
+</div>
+</body>
+</html>
