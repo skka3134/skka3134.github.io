@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>爱亦凡的继续观看怎么用：最多留 30 条，换设备不会同步</title>
+<meta name="description" content="拆开爱亦凡首页的继续观看、播放地址里的 id、ep、ch 参数，以及双通道切换和问题反馈的实际用法。">
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0f1115;color:#d7dbe0;
+     font:16px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:720px;margin:0 auto;padding:48px 22px 90px}
+a{color:#7dd3fc;text-decoration:none}
+a:hover{text-decoration:underline}
+header.site{border-bottom:1px solid #21262d;padding-bottom:22px;margin-bottom:38px}
+header.site h1{margin:0 0 8px;font-size:24px;letter-spacing:-.02em}
+header.site p{margin:0;color:#8b949e;font-size:14px}
+article h1{font-size:30px;line-height:1.25;letter-spacing:-.02em;margin:0 0 8px}
+article time{color:#8b949e;font-size:13px}
+article h2{font-size:21px;margin:34px 0 10px;letter-spacing:-.01em}
+article h3{font-size:17px;margin:26px 0 8px}
+article p{margin:14px 0}
+article ul,article ol{margin:14px 0;padding-left:22px}
+article li{margin:6px 0}
+article code{background:#1c2128;padding:2px 6px;border-radius:4px;font-size:14px;
+             font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+article pre{background:#161b22;border:1px solid #21262d;border-radius:8px;
+            padding:14px 16px;overflow-x:auto}
+article pre code{background:none;padding:0;font-size:13px;line-height:1.6}
+article blockquote{border-left:3px solid #30363d;margin:16px 0;padding:2px 0 2px 16px;color:#9ba3ad}
+ul.posts{list-style:none;padding:0;margin:0}
+ul.posts li{border-bottom:1px solid #21262d;padding:20px 0}
+ul.posts li:last-child{border-bottom:0}
+ul.posts h2{margin:0 0 6px;font-size:19px;font-weight:600}
+ul.posts h2 a{color:#e6edf3}
+ul.posts h2 a:hover{color:#7dd3fc}
+ul.posts time{color:#8b949e;font-size:13px}
+ul.posts p{margin:8px 0 0;color:#9ba3ad;font-size:15px}
+footer.site{margin-top:60px;padding-top:22px;border-top:1px solid #21262d;
+            color:#6e7681;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="site">
+  <h1><a href="/" style="color:inherit">Tom Hargreaves</a></h1>
+  <p>Notes on automation, scraping, and the parts of it that break in production.</p>
+</header>
+<article><h1>爱亦凡的继续观看怎么用：最多留 30 条，换设备不会同步</h1><time>2026-11-27</time>
+<p>追剧时麻烦的往往不是打开网站，而是昨天看到第几集、今天该从哪个入口接着看。爱亦凡首页有“继续观看”，但先别把它当成账号里的观看档案：它实际上是一份保存在当前浏览器里的临时清单。</p>
+<h2>继续观看最多留 30 条，而且只记到集数</h2>
+<p>从首页和播放页的记录逻辑看，继续观看有几个明确限制：</p>
+<ul><li>最多保留 30 部影片，最新的排在前面。</li><li>同一部影片反复打开，只更新原来的记录，不会重复占一条。</li><li>记录的是影片 ID、名称、封面和集数，不记录视频里看到了几分几秒。</li><li>数据存在当前浏览器的本地存储里。清掉站点数据、换浏览器、换手机或电脑，都不会自动带过去。</li></ul>
+<p>还有一个容易误会的地方：第一次进入影片详情页时，页面也会写一条记录，默认是第一集。所以“继续观看”里出现一部剧，不一定代表你已经播放过，也可能只是点开详情看了看。</p>
+<h2>选集进度藏在播放地址的三个参数里</h2>
+<p>播放页的地址可以长这样：</p>
+<pre><code>/play?id=108773&amp;ep=2&amp;ch=c</code></pre>
+<p>三个参数分别有用：</p>
+<ul><li><code>id</code>：影片 ID。</li><li><code>ep</code>：第几集的序号，从 <code>0</code> 开始。<code>ep=0</code> 是第一集，<code>ep=2</code> 是第三集。</li><li><code>ch</code>：播放通道。默认是 <code>a</code>，对应通道 1；<code>c</code> 对应通道 2。</li></ul>
+<p>例如《布兰克夫人第五季》的详情页当前给出 5 集选集，地址中的 <code>ep=4</code> 就是第五集。复制播放地址给别人时，最好连 <code>id</code> 和 <code>ep</code> 一起复制，只发影片名，对方还得重新找集数。</p>
+<p>如果填了超出范围的 <code>ep</code>，播放页会把序号限制在最后一集，不会自己往后找尚未更新的内容。</p>
+<h2>看不了先换通道，再带着信息反馈</h2>
+<p>播放页提供“通道 1”和“通道 2”。默认走通道 1；如果加载失败，页面会尝试自动切到通道 2。手动排查时，也可以直接点击通道 2，或者在地址里把 <code>ch</code> 改成 <code>c</code>。</p>
+<p>换通道只是换加载路线，不会改变当前集数。如果两个通道都看不了，先记下影片名、第几集、当前通道，以及大概卡在哪个时间点，再走详情页里的“看不了 / 封面信息不对？点这里反馈”。这个入口会自动带上影片标题和 ID，补充问题时更容易对上具体资源。</p>
+<p>反馈页的描述最多填写 1000 字，联系方式选填。只写“看不了”信息太少；写清片名、集数、通道和报错表现，排查时更有用。</p>
+<h2>想跨设备接着看，得自己留一份清单</h2>
+<p>爱亦凡适合在常用浏览器里快速接着看，但不能替代跨设备追剧清单。比较实际的做法是：</p>
+<ol><li>在首页或列表页选片，进入详情页确认有选集。</li><li>点具体集数播放，不要只停在详情页。</li><li>返回首页，用“继续观看”回到最近打开的影片。</li><li>如果会在手机、平板和电脑之间切换，另外记下片名和集数，别只依赖浏览器里的记录。</li></ol>
+<p>如果只想从这个入口试一遍，直接打开 <a href="http://lanrendy.top/">爱亦凡</a>，先看首页最近更新，再进一部片子的详情页即可。</p></article>
+<footer class="site">
+  <p>Tom Hargreaves</p>
+</footer>
+</div>
+</body>
+</html>
